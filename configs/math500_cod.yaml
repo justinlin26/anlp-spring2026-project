@@ -1,0 +1,28 @@
+system_prompt: |
+  Solve the following math problem. Think step by step, but only keep minimum draft for each thinking step, with 5 words at most.
+  Put your final answer within \boxed{}.
+format: |
+  Problem: {question}
+  Solution: {answer}
+fewshot:
+  - question: |
+      Find the domain of the expression $\frac{\sqrt{x-2}}{\sqrt{5-x}}$.
+    answer: |
+      x-2>=0, x>=2; 5-x>0, x<5. $\boxed{[2,5)}$
+  - question: |
+      If $\det \mathbf{A} = 2$ and $\det \mathbf{B} = 12$, then find
+      $\det (\mathbf{A} \mathbf{B})$.
+    answer: |
+      det(AB)=det(A)*det(B)=2*12=24. $\boxed{24}$
+  - question: |
+      Terrell usually lifts two 20-pound weights 12 times. If he uses two
+      15-pound weights instead, how many times must Terrell lift them in order
+      to lift the same total weight?
+    answer: |
+      Total=2*20*12=480; 2*15*n=480; n=16. $\boxed{16}$
+  - question: |
+      If the system of equations $6x-4y=a$ and $6y-9x=b$ has a solution
+      $(x, y)$ where $x$ and $y$ are both nonzero, find $\frac{a}{b}$,
+      assuming $b$ is nonzero.
+    answer: |
+      -3/2*(6x-4y)=6y-9x; -3a/2=b; a/b=-2/3. $\boxed{-\frac{2}{3}}$

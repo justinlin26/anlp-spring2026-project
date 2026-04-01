@@ -1,0 +1,10 @@
+torch>=2.2.0
+vllm>=0.6.0
+transformers>=4.45.0
+peft>=0.14.0
+datasets>=3.0.0
+pyyaml
+pydantic
+tqdm
+regex
+accelerate
