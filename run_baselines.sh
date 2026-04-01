@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+export MKL_THREADING_LAYER=GNU
+export VLLM_WORKER_MULTIPROC_METHOD=spawn
+
 MODEL="Qwen/Qwen2.5-3B-Instruct"
 ADAPTER="hemingkx/TokenSkip-Qwen2.5-3B-Instruct-GSM8K"
 

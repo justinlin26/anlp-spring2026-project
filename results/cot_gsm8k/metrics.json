@@ -1,0 +1,10 @@
+{
+    "method": "cot",
+    "benchmark": "gsm8k",
+    "model": "Qwen/Qwen2.5-3B-Instruct",
+    "n_samples": 1319,
+    "accuracy": 0.56634,
+    "avg_cot_tokens": 284.43,
+    "total_time_s": 21.78,
+    "latency_per_sample_s": 0.0165
+}

@@ -1,0 +1,11 @@
+{
+    "method": "tokenskip",
+    "benchmark": "gsm8k",
+    "model": "Qwen/Qwen2.5-3B-Instruct",
+    "n_samples": 1319,
+    "accuracy": 0.76649,
+    "avg_cot_tokens": 205.74,
+    "total_time_s": 29.75,
+    "latency_per_sample_s": 0.0226,
+    "compression_ratio": 0.3
+}
