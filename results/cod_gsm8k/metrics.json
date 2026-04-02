@@ -3,8 +3,8 @@
     "benchmark": "gsm8k",
     "model": "Qwen/Qwen2.5-3B-Instruct",
     "n_samples": 1319,
-    "accuracy": 0.01137,
-    "avg_cot_tokens": 496.66,
-    "total_time_s": 29.02,
-    "latency_per_sample_s": 0.022
+    "accuracy": 0.52767,
+    "avg_cot_tokens": 46.99,
+    "total_time_s": 12.0,
+    "latency_per_sample_s": 0.0091
 }

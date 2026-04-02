@@ -33,17 +33,41 @@ python evaluate.py --method cod --benchmark math500 --model ${MODEL} --max_new_t
 echo ">>> [6/9] Chain of Draft on SVAMP"
 python evaluate.py --method cod --benchmark svamp --model ${MODEL}
 
-# ---- TokenSkip (GSM8K only, pre-trained adapter) ----
-echo ">>> [7/9] TokenSkip on GSM8K (ratio=0.7)"
+# ---- TokenSkip ----
+echo ">>> [7/15] TokenSkip on GSM8K (ratio=0.7)"
 python evaluate.py --method tokenskip --benchmark gsm8k --model ${MODEL} \
     --adapter ${ADAPTER} --compression_ratio 0.7
 
-echo ">>> [8/9] TokenSkip on GSM8K (ratio=0.5)"
+echo ">>> [8/15] TokenSkip on GSM8K (ratio=0.5)"
 python evaluate.py --method tokenskip --benchmark gsm8k --model ${MODEL} \
     --adapter ${ADAPTER} --compression_ratio 0.5
 
-echo ">>> [9/9] TokenSkip on GSM8K (ratio=0.3)"
+echo ">>> [9/15] TokenSkip on GSM8K (ratio=0.3)"
 python evaluate.py --method tokenskip --benchmark gsm8k --model ${MODEL} \
+    --adapter ${ADAPTER} --compression_ratio 0.3
+
+echo ">>> [10/15] TokenSkip on MATH-500 (ratio=0.7)"
+python evaluate.py --method tokenskip --benchmark math500 --model ${MODEL} \
+    --adapter ${ADAPTER} --compression_ratio 0.7 --max_new_tokens 1024
+
+echo ">>> [11/15] TokenSkip on MATH-500 (ratio=0.5)"
+python evaluate.py --method tokenskip --benchmark math500 --model ${MODEL} \
+    --adapter ${ADAPTER} --compression_ratio 0.5 --max_new_tokens 1024
+
+echo ">>> [12/15] TokenSkip on MATH-500 (ratio=0.3)"
+python evaluate.py --method tokenskip --benchmark math500 --model ${MODEL} \
+    --adapter ${ADAPTER} --compression_ratio 0.3 --max_new_tokens 1024
+
+echo ">>> [13/15] TokenSkip on SVAMP (ratio=0.7)"
+python evaluate.py --method tokenskip --benchmark svamp --model ${MODEL} \
+    --adapter ${ADAPTER} --compression_ratio 0.7
+
+echo ">>> [14/15] TokenSkip on SVAMP (ratio=0.5)"
+python evaluate.py --method tokenskip --benchmark svamp --model ${MODEL} \
+    --adapter ${ADAPTER} --compression_ratio 0.5
+
+echo ">>> [15/15] TokenSkip on SVAMP (ratio=0.3)"
+python evaluate.py --method tokenskip --benchmark svamp --model ${MODEL} \
     --adapter ${ADAPTER} --compression_ratio 0.3
 
 echo ""

@@ -203,7 +203,8 @@ def extract_answer(pred_str, exhaust=False):
 def extract_gsm8k_answer(response):
     """Extract numeric answer from GSM8K-style response (#### separator or last number)."""
     if '####' in response:
-        ans = response.split('####')[-1].strip()
+        ans = response.split('####')[1].strip()  # first occurrence; [-1] picks up hallucinated continuations
+        ans = ans.split('\n')[0].strip()           # stop before any hallucinated follow-on Q&A
         ans = ans.replace(",", "").replace("$", "").replace("%", "")
         return ans
 

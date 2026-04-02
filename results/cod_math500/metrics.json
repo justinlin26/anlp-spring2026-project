@@ -3,8 +3,8 @@
     "benchmark": "math500",
     "model": "Qwen/Qwen2.5-3B-Instruct",
     "n_samples": 500,
-    "accuracy": 0.53,
-    "avg_cot_tokens": 559.08,
-    "total_time_s": 14.93,
-    "latency_per_sample_s": 0.0299
+    "accuracy": 0.516,
+    "avg_cot_tokens": 559.26,
+    "total_time_s": 15.33,
+    "latency_per_sample_s": 0.0307
 }

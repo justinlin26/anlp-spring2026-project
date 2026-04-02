@@ -108,6 +108,8 @@ def run_vllm_inference(prompts, model_path, method, adapter_path=None,
     from vllm.lora.request import LoRARequest
 
     use_lora = method == "tokenskip" and adapter_path is not None
+    # For few-shot CoT/CoD, stop before the model hallucinates a follow-on Q&A pair
+    stop_sequences = ["\nQ:"] if method in ("cot", "cod") else []
 
     llm_kwargs = dict(
         model=model_path,
@@ -131,6 +133,7 @@ def run_vllm_inference(prompts, model_path, method, adapter_path=None,
         temperature=temperature,
         top_p=1.0,
         max_tokens=max_new_tokens,
+        stop=stop_sequences,
         n=1,
     )
 

@@ -1,0 +1,11 @@
+{
+    "method": "tokenskip",
+    "benchmark": "svamp",
+    "model": "Qwen/Qwen2.5-3B-Instruct",
+    "n_samples": 300,
+    "accuracy": 0.81,
+    "avg_cot_tokens": 128.48,
+    "total_time_s": 5.54,
+    "latency_per_sample_s": 0.0185,
+    "compression_ratio": 0.5
+}
