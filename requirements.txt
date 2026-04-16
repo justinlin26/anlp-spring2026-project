@@ -8,3 +8,7 @@ pydantic
 tqdm
 regex
 accelerate
+trl>=0.14.0
+deepspeed
+wandb
+bitsandbytes
