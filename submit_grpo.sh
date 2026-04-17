@@ -1,38 +1,47 @@
 #!/bin/bash
+#SBATCH --job-name=grpo_sweep
+#SBATCH --account=bfoz-delta-gpu
+#SBATCH --partition=gpuA100x4
+#SBATCH --gpus-per-node=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=16
+#SBATCH --mem=64G
+#SBATCH --time=24:00:00
+#SBATCH --output=slurm-%j.out
+
 set -e
 
 export MKL_THREADING_LAYER=GNU
 export VLLM_WORKER_MULTIPROC_METHOD=spawn
-export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
 MODEL="Qwen/Qwen2.5-3B-Instruct"
-OUTPUT_ROOT="${OUTPUT_ROOT:-.}"          # override for scratch/project filesystems
-CKPT_ROOT="${OUTPUT_ROOT}/checkpoints"
-RESULTS_ROOT="${OUTPUT_ROOT}/results"
+CKPT_ROOT="checkpoints"
 LAMBDAS=(0.0 0.1 0.3 0.5)
-MAX_STEPS="${MAX_STEPS:-500}"   # cap each lambda. Full epoch on GSM8K ≈ 934 steps.
 
-# Memory-calibrated flags for a single L40S (48GB):
-#   per_device_batch × world_size must divide num_generations (TRL 0.15 constraint).
-#   With 4 × 1 = 4 and num_generations=4, effective groups-per-step = grad_accum = 8.
-TRAIN_FLAGS=(
-    --per_device_train_batch_size 4
-    --gradient_accumulation_steps 8
-    --num_generations 4
-    --vllm_gpu_memory_utilization 0.25
-    --max_steps "${MAX_STEPS}"
-)
+mkdir -p "${CKPT_ROOT}"
 
-mkdir -p "${CKPT_ROOT}" "${RESULTS_ROOT}"
+# ---- Resume lambda=0.0 from checkpoint-250 if adapter not yet saved ----
+LAM=0.0
+OUT="${CKPT_ROOT}/grpo_gsm8k_lam${LAM}"
+if [ ! -f "${OUT}/adapter_model.safetensors" ]; then
+    RESUME=""
+    if [ -d "${OUT}/checkpoint-250" ]; then
+        RESUME="--resume_from_checkpoint ${OUT}/checkpoint-250"
+    fi
+    echo ">>> Training lambda=${LAM} -> ${OUT} ${RESUME}"
+    python train_grpo.py \
+        --model "${MODEL}" \
+        --benchmark gsm8k \
+        --lambda_len "${LAM}" \
+        --output_dir "${OUT}" \
+        --num_train_epochs 1 \
+        ${RESUME}
+else
+    echo ">>> Skipping lambda=${LAM} (adapter already exists)"
+fi
 
-echo "============================================"
-echo "  GRPO length-regularized training sweep"
-echo "  Base model: ${MODEL}"
-echo "  Lambda values: ${LAMBDAS[*]}"
-echo "============================================"
-
-# ---- Train one adapter per lambda ----
-for LAM in "${LAMBDAS[@]}"; do
+# ---- Train remaining lambdas ----
+for LAM in 0.1 0.3 0.5; do
     OUT="${CKPT_ROOT}/grpo_gsm8k_lam${LAM}"
     if [ -d "${OUT}" ] && [ -f "${OUT}/adapter_model.safetensors" ]; then
         echo ">>> Skipping training for lambda=${LAM} (adapter already at ${OUT})"
@@ -44,7 +53,7 @@ for LAM in "${LAMBDAS[@]}"; do
         --benchmark gsm8k \
         --lambda_len "${LAM}" \
         --output_dir "${OUT}" \
-        "${TRAIN_FLAGS[@]}"
+        --num_train_epochs 1
 done
 
 # ---- Evaluate each adapter on all three benchmarks ----
@@ -59,8 +68,7 @@ for LAM in "${LAMBDAS[@]}"; do
             --benchmark "${BENCH}" \
             --model "${MODEL}" \
             --adapter "${ADAPTER}" \
-            --max_new_tokens "${MAX_NEW_TOKENS}" \
-            --output_dir "${RESULTS_ROOT}/grpo_${BENCH}_lam${LAM}"
+            --max_new_tokens "${MAX_NEW_TOKENS}"
     done
 done
 
@@ -68,12 +76,12 @@ echo ""
 echo "============================================"
 echo "  GRPO sweep complete"
 echo "  Adapters: ${CKPT_ROOT}/"
-echo "  Results:  ${RESULTS_ROOT}/grpo_*/"
+echo "  Results:  results/grpo_*/"
 echo "============================================"
 
 echo ""
 echo "Summary (accuracy vs mean CoT tokens per lambda):"
-for f in "${RESULTS_ROOT}"/grpo_*/metrics.json; do
+for f in results/grpo_*/metrics.json; do
     echo ""
     echo "--- ${f} ---"
     cat "${f}"

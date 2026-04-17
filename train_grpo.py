@@ -16,13 +16,15 @@ Then evaluate with:
 import argparse
 import os
 
+import torch
 from datasets import Dataset
 from peft import LoraConfig
+from transformers import AutoModelForCausalLM, AutoTokenizer
 from trl import GRPOConfig, GRPOTrainer
 
 from benchmarks import TRAIN_LOADERS
 from utils.prompts import grpo_chat_prompt
-from utils.rewards import accuracy_reward, make_length_reward
+from utils.rewards import accuracy_reward, make_length_penalty
 
 
 def build_dataset(benchmark, max_examples=None):
@@ -62,6 +64,9 @@ def main():
     parser.add_argument("--use_vllm", action="store_true", default=True)
     parser.add_argument("--vllm_gpu_memory_utilization", type=float, default=0.3,
                         help="Fraction of GPU memory vLLM may use during colocated rollouts.")
+    parser.add_argument("--vllm_device", type=str, default="cuda:0",
+                        help="Which CUDA device vLLM should use. On single-GPU nodes, set to 'cuda:0' "
+                             "so vLLM shares the GPU with training (TRL 0.14 default assumes separate GPUs).")
     parser.add_argument("--max_examples", type=int, default=None,
                         help="Truncate training set (for smoke tests).")
     parser.add_argument("--seed", type=int, default=42)
@@ -70,6 +75,8 @@ def main():
     parser.add_argument("--report_to", type=str, default="none",
                         help="Logger: 'wandb', 'tensorboard', or 'none'.")
     parser.add_argument("--run_name", type=str, default=None)
+    parser.add_argument("--resume_from_checkpoint", type=str, default=None,
+                        help="Path to a checkpoint directory to resume training from.")
     args = parser.parse_args()
 
     print(f"Model: {args.model}")
@@ -99,13 +106,11 @@ def main():
         num_train_epochs=args.num_train_epochs,
         max_steps=args.max_steps,
         num_generations=args.num_generations,
-        max_prompt_length=args.max_prompt_length,
         max_completion_length=args.max_completion_length,
         temperature=args.temperature,
         beta=args.beta,
-        reward_weights=[1.0, -args.lambda_len],
         use_vllm=args.use_vllm,
-        vllm_mode="colocate",
+        vllm_device=args.vllm_device,
         vllm_gpu_memory_utilization=args.vllm_gpu_memory_utilization,
         bf16=True,
         logging_steps=args.logging_steps,
@@ -116,22 +121,32 @@ def main():
         gradient_checkpointing=True,
     )
 
+    tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=True)
     reward_funcs = [
         accuracy_reward,
-        make_length_reward(args.max_completion_length),
+        make_length_penalty(args.lambda_len, args.max_completion_length, tokenizer),
     ]
     reward_funcs[0].__name__ = "accuracy"
-    reward_funcs[1].__name__ = "length_norm"
+    reward_funcs[1].__name__ = "length_penalty"
+
+    # Load model ourselves so we can enable_input_require_grads(), which is
+    # needed for PEFT + gradient_checkpointing to propagate gradients through
+    # the frozen embedding layer. TRL 0.14's GRPOTrainer doesn't do this.
+    base_model = AutoModelForCausalLM.from_pretrained(
+        args.model, torch_dtype=torch.bfloat16, trust_remote_code=True,
+    )
+    if training_args.gradient_checkpointing:
+        base_model.enable_input_require_grads()
 
     trainer = GRPOTrainer(
-        model=args.model,
+        model=base_model,
         args=training_args,
         train_dataset=dataset,
         reward_funcs=reward_funcs,
         peft_config=peft_config,
     )
 
-    trainer.train()
+    trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
     trainer.save_model(args.output_dir)
     print(f"Saved adapter to {args.output_dir}")
 

@@ -1,6 +1,7 @@
 """Reward functions for GRPO training.
 
-Used together with `reward_weights=[1.0, -LAMBDA]` in GRPOConfig to implement
+TRL's GRPOTrainer sums reward functions with equal weight. We bake LAMBDA
+directly into the length penalty so the trainer's implicit sum yields
     total_reward = 1{correct} - LAMBDA * (len / max_completion_length)
 
 Signature follows TRL's GRPOTrainer contract: reward functions accept `completions`,
@@ -30,14 +31,20 @@ def accuracy_reward(completions, answer, **kwargs):
     return rewards
 
 
-def make_length_reward(max_completion_length):
-    """Build a length reward that returns normalized completion length in [0, 1].
+def make_length_penalty(lambda_len, max_completion_length, tokenizer):
+    """Build a length penalty reward of -lambda * (len / max_completion_length).
 
-    Combined with reward_weights=[..., -LAMBDA], yields a penalty of
-    LAMBDA * (len / max_completion_length) per sample.
+    Tokenizes each completion with the supplied tokenizer to measure length in
+    tokens (TRL 0.14's reward-fn API passes `completions` but not `completion_ids`).
+    When summed with accuracy_reward under TRL's default equal weighting, the
+    total reward is `correct - lambda_len * (len / max_completion_length)`.
     """
 
-    def length_reward(completion_ids, **kwargs):
-        return [min(len(ids) / max_completion_length, 1.0) for ids in completion_ids]
+    def length_penalty(completions, **kwargs):
+        penalties = []
+        for comp in completions:
+            n_tokens = len(tokenizer.encode(_completion_text(comp), add_special_tokens=False))
+            penalties.append(-lambda_len * min(n_tokens / max_completion_length, 1.0))
+        return penalties
 
-    return length_reward
+    return length_penalty

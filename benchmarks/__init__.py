@@ -1,5 +1,5 @@
 from benchmarks.gsm8k import load_gsm8k, load_gsm8k_train
-from benchmarks.math500 import load_math500
+from benchmarks.math500 import load_math500, load_math_train
 from benchmarks.svamp import load_svamp
 
 BENCHMARK_LOADERS = {
@@ -10,4 +10,5 @@ BENCHMARK_LOADERS = {
 
 TRAIN_LOADERS = {
     "gsm8k": load_gsm8k_train,
+    "math": load_math_train,
 }
