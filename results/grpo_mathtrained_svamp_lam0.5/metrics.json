@@ -1,0 +1,10 @@
+{
+    "method": "grpo",
+    "benchmark": "svamp",
+    "model": "Qwen/Qwen2.5-3B-Instruct",
+    "n_samples": 300,
+    "accuracy": 0.91,
+    "avg_cot_tokens": 144.88,
+    "total_time_s": 16.43,
+    "latency_per_sample_s": 0.0548
+}

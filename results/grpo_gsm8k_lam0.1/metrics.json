@@ -1,0 +1,10 @@
+{
+    "method": "grpo",
+    "benchmark": "gsm8k",
+    "model": "Qwen/Qwen2.5-3B-Instruct",
+    "n_samples": 1319,
+    "accuracy": 0.84913,
+    "avg_cot_tokens": 203.91,
+    "total_time_s": 98.47,
+    "latency_per_sample_s": 0.0747
+}

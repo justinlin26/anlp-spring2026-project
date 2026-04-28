@@ -1,0 +1,10 @@
+{
+    "method": "grpo",
+    "benchmark": "math500",
+    "model": "Qwen/Qwen2.5-3B-Instruct",
+    "n_samples": 500,
+    "accuracy": 0.588,
+    "avg_cot_tokens": 455.68,
+    "total_time_s": 81.27,
+    "latency_per_sample_s": 0.1625
+}
